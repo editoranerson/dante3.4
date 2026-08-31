@@ -22,6 +22,7 @@ export function PlanUpgradeModal({
   };
 
   return (
+    <>
     <Modal open={open} onClose={onClose} title="Escolha seu plano" maxWidth="max-w-3xl">
       <div className="mb-4 text-center text-sm text-grape-200/70">
         Você atingiu o limite diário de mensagens do seu plano. Faça upgrade para continuar conversando com o Dante!
@@ -77,13 +78,13 @@ export function PlanUpgradeModal({
       >
         <X size={16} /> Fechar
       </button>
-
-      <SubscribeModal
-        open={checkoutPlan !== null}
-        plan={checkoutPlan}
-        onClose={() => setCheckoutPlan(null)}
-      />
     </Modal>
+    <SubscribeModal
+      open={checkoutPlan !== null}
+      plan={checkoutPlan}
+      onClose={() => setCheckoutPlan(null)}
+    />
+    </>
   );
 }
 
