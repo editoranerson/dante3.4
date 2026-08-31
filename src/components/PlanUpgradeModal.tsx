@@ -3,8 +3,7 @@ import type { PlanType } from '@/lib/supabase';
 import { PLANS } from '@/lib/plans';
 import { Modal } from '@/components/Modal';
 import { useState } from 'react';
-import { supabase, SUPABASE_URL } from '@/lib/supabase';
-import { useToast } from '@/components/Toast';
+import { SubscribeModal } from '@/components/SubscribeModal';
 
 export function PlanUpgradeModal({
   open,
@@ -15,51 +14,11 @@ export function PlanUpgradeModal({
   onClose: () => void;
   currentPlan: PlanType;
 }) {
-  const { toast } = useToast();
-  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const [checkoutPlan, setCheckoutPlan] = useState<PlanType | null>(null);
 
-  const checkout = async (planId: PlanType) => {
+  const startCheckout = (planId: PlanType) => {
     if (planId === 'free') return;
-    setLoadingPlan(planId);
-    try {
-      const { data: session } = await supabase.auth.getSession();
-      if (!session.session) {
-        toast('Você precisa estar logado.', 'error');
-        return;
-      }
-      const apiUrl = `${SUPABASE_URL}/functions/v1/mercadopago-checkout`;
-      const res = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.session.access_token}`,
-        },
-        body: JSON.stringify({
-          plan: planId,
-          success_url: window.location.origin,
-        }),
-      });
-      const raw = await res.text();
-      let data: { init_point?: string; error?: string } = {};
-      try {
-        data = raw ? JSON.parse(raw) : {};
-      } catch {
-        data = {};
-      }
-      if (!res.ok) {
-        toast(data.error || `Erro ao iniciar pagamento (${res.status}).`, 'error');
-        return;
-      }
-      if (data.init_point) {
-        window.location.href = data.init_point;
-      } else {
-        toast('Erro ao obter link de pagamento.', 'error');
-      }
-    } catch {
-      toast('Erro de conexão.', 'error');
-    } finally {
-      setLoadingPlan(null);
-    }
+    setCheckoutPlan(planId);
   };
 
   return (
@@ -98,19 +57,15 @@ export function PlanUpgradeModal({
               </p>
               <p className="mt-1 text-sm text-grape-200/70">{plan.dailyLimit} mensagens/dia</p>
               <button
-                onClick={() => checkout(plan.id)}
-                disabled={isCurrent || loadingPlan === plan.id}
+                onClick={() => startCheckout(plan.id)}
+                disabled={isCurrent}
                 className={`mt-4 w-full rounded-full py-2.5 text-sm font-semibold transition ${
                   isCurrent
                     ? 'cursor-default border border-white/20 bg-white/5 text-grape-200/50'
                     : 'bg-gradient-to-r from-sky2-400 to-rose-400 text-white hover:brightness-110 active:scale-[0.98]'
                 }`}
               >
-                {isCurrent
-                  ? 'Plano atual'
-                  : loadingPlan === plan.id
-                    ? 'Redirecionando...'
-                    : 'Assinar agora'}
+                {isCurrent ? 'Plano atual' : 'Assinar agora'}
               </button>
             </div>
           );
@@ -122,6 +77,12 @@ export function PlanUpgradeModal({
       >
         <X size={16} /> Fechar
       </button>
+
+      <SubscribeModal
+        open={checkoutPlan !== null}
+        plan={checkoutPlan}
+        onClose={() => setCheckoutPlan(null)}
+      />
     </Modal>
   );
 }
