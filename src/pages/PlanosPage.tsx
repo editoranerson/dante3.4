@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Check, Crown, Diamond, Plus, Sparkles, Loader2 } from 'lucide-react';
+import { Check, Crown, Diamond, Plus, Sparkles } from 'lucide-react';
 import { PLANS } from '@/lib/plans';
-import { supabase, SUPABASE_URL, type PlanType } from '@/lib/supabase';
+import type { PlanType } from '@/lib/supabase';
+import { SubscribeModal } from '@/components/SubscribeModal';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/components/Toast';
 import { navigateTo } from '@/lib/router';
@@ -10,59 +11,18 @@ import { getEffectivePlan } from '@/lib/plans';
 export function PlanosPage() {
   const { user, profile } = useAuth();
   const { toast } = useToast();
-  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const [checkoutPlan, setCheckoutPlan] = useState<PlanType | null>(null);
 
   const currentPlan = profile ? getEffectivePlan(profile) : 'free';
 
-  const checkout = async (planId: PlanType) => {
+  const startCheckout = (planId: PlanType) => {
     if (planId === 'free') return;
     if (!user) {
       toast('Faça login para assinar um plano.', 'info');
       navigateTo({ name: 'login' });
       return;
     }
-    setLoadingPlan(planId);
-    try {
-      const { data: session } = await supabase.auth.getSession();
-      if (!session.session) {
-        toast('Sessão expirada. Faça login novamente.', 'error');
-        navigateTo({ name: 'login' });
-        return;
-      }
-      const apiUrl = `${SUPABASE_URL}/functions/v1/mercadopago-checkout`;
-      const res = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.session.access_token}`,
-        },
-        body: JSON.stringify({
-          plan: planId,
-          success_url: window.location.origin,
-        }),
-      });
-      const raw = await res.text();
-      let data: { init_point?: string; error?: string } = {};
-      try {
-        data = raw ? JSON.parse(raw) : {};
-      } catch {
-        data = {};
-      }
-      if (!res.ok) {
-        toast(data.error || `Erro ao iniciar pagamento (${res.status}).`, 'error');
-        return;
-      }
-
-      if (data.init_point) {
-        window.open(data.init_point, '_blank');
-      } else {
-        toast('Erro ao obter link de pagamento.', 'error');
-      }
-    } catch {
-      toast('Erro de conexão.', 'error');
-    } finally {
-      setLoadingPlan(null);
-    }
+    setCheckoutPlan(planId);
   };
 
   const iconFor = (icon: string | null) => {
@@ -158,8 +118,8 @@ export function PlanosPage() {
               </ul>
 
               <button
-                onClick={() => checkout(plan.id)}
-                disabled={isCurrent || isFree || loadingPlan === plan.id}
+                onClick={() => startCheckout(plan.id)}
+                disabled={isCurrent || isFree}
                 className={`mt-6 w-full rounded-full py-2.5 text-sm font-semibold transition ${
                   isCurrent
                     ? 'cursor-default border border-white/20 bg-white/5 text-grape-200/50'
@@ -168,17 +128,7 @@ export function PlanosPage() {
                       : 'bg-gradient-to-r from-sky2-400 to-rose-400 text-white hover:brightness-110 active:scale-[0.98]'
                 }`}
               >
-                {isCurrent
-                  ? 'Plano atual'
-                  : isFree
-                    ? 'Plano padrão'
-                    : loadingPlan === plan.id
-                      ? (
-                        <span className="flex items-center justify-center gap-2">
-                          <Loader2 size={16} className="animate-spin" /> Redirecionando...
-                        </span>
-                      )
-                      : 'Assinar agora'}
+                {isCurrent ? 'Plano atual' : isFree ? 'Plano padrão' : 'Assinar agora'}
               </button>
             </div>
           );
@@ -203,6 +153,11 @@ export function PlanosPage() {
           </button>
         </div>
       )}
+      <SubscribeModal
+        open={checkoutPlan !== null}
+        plan={checkoutPlan}
+        onClose={() => setCheckoutPlan(null)}
+      />
     </div>
   );
 }
