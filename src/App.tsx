@@ -35,11 +35,17 @@ import { ReferralTracker } from '@/components/ReferralTracker';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { getRefCodeFromUrl } from '@/lib/affiliate';
+import { ensureAdSenseScript } from '@/lib/adsense';
 
 function Routed() {
   const { route } = useRouter();
   const { loading } = useAuth();
   const initialLoadDone = useRef(false);
+
+  // AdSense: garante o script global e notifica o Google a cada troca de rota (SPA).
+  useEffect(() => {
+    ensureAdSenseScript();
+  }, [route.name, JSON.stringify(route)]);
   if (!loading) initialLoadDone.current = true;
 
   if (loading && !initialLoadDone.current) {
