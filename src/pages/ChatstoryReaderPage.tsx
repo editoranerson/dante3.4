@@ -8,6 +8,8 @@ import {
   type ChatstoryElement,
 } from '@/lib/supabase';
 import { navigateTo } from '@/lib/router';
+import { PageMeta, excerpt } from '@/lib/seo';
+import { AdSlot } from '@/components/AdSlot';
 
 export function ChatstoryReaderPage({ slug, cap }: { slug: string; cap: string }) {
   const [story, setStory] = useState<Chatstory | null>(null);
@@ -122,6 +124,14 @@ export function ChatstoryReaderPage({ slug, cap }: { slug: string; cap: string }
 
   return (
     <div className="animate-fade-in mx-auto max-w-2xl px-4 py-8 sm:px-6">
+      <PageMeta
+        title={`${chapter.title} — ${story.title}`}
+        description={excerpt(
+          elements.map((e) => e.content).join(' ') || story.synopsis,
+        )}
+        image={story.cover_url}
+        type="article"
+      />
       <button
         onClick={() => navigateTo({ name: 'chatstory', slug: story.slug })}
         className="mb-4 inline-flex items-center gap-1.5 text-sm text-grape-200/60 hover:text-grape-50"
@@ -199,6 +209,22 @@ export function ChatstoryReaderPage({ slug, cap }: { slug: string; cap: string }
           </div>
         )}
       </div>
+
+      {/* Fallback de texto: transcrição completa no DOM para crawlers (Googlebot / AdSense),
+          já que a leitura interativa revela as falas por toque. */}
+      <article className="sr-only">
+        <h2>{`${chapter.title} — ${story.title}`}</h2>
+        {elements.map((el) => {
+          const c = el.character_id ? charMap[el.character_id] : undefined;
+          return (
+            <p key={`t-${el.id}`}>
+              {el.kind === 'narration' ? el.content : `${c?.name ?? 'Alguém'}: ${el.content}`}
+            </p>
+          );
+        })}
+      </article>
+
+      <AdSlot name="chatstoryReader" routeKey={chapter.id} />
 
       {finished && total > 0 && (
         <div className="mt-6 flex flex-wrap justify-center gap-3">

@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { BookOpen, Library, Sparkles } from 'lucide-react';
 import { supabase, type ArchivedChapter, type LibraryCategory } from '@/lib/supabase';
 import { navigateTo } from '@/lib/router';
+import { PageMeta } from '@/lib/seo';
+import { AdSlot } from '@/components/AdSlot';
 
 export function BibliotecaPage({ cat }: { cat?: string }) {
   const [categories, setCategories] = useState<LibraryCategory[]>([]);
@@ -49,6 +51,14 @@ export function BibliotecaPage({ cat }: { cat?: string }) {
 
   return (
     <div className="animate-fade-in mx-auto max-w-5xl px-4 py-12 sm:px-6">
+      <PageMeta
+        title={activeCategory ? `Biblioteca · ${activeCategory.name}` : 'Biblioteca'}
+        description={
+          activeCategory
+            ? `Capítulos de ${activeCategory.name} no universo Querido Dante. Leia todos os capítulos arquivados.`
+            : 'Todos os capítulos do universo Querido Dante, organizados por categoria.'
+        }
+      />
       <div className="mb-8 text-center">
         <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-grape-200/80">
           <Library size={14} className="text-rose-400" /> Biblioteca
@@ -120,6 +130,7 @@ export function BibliotecaPage({ cat }: { cat?: string }) {
           ))}
         </div>
       )}
+      <AdSlot name="bibliotecaList" routeKey={active ?? "all"} />
     </div>
   );
 }

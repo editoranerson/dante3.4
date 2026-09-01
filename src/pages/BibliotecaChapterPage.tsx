@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { ArrowLeft, BookOpen, Library } from 'lucide-react';
 import { supabase, type ArchivedChapter, type LibraryCategory } from '@/lib/supabase';
 import { navigateTo } from '@/lib/router';
+import { PageMeta, excerpt } from '@/lib/seo';
+import { AdSlot } from '@/components/AdSlot';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -62,6 +64,11 @@ export function BibliotecaChapterPage({ cat, slug }: { cat: string; slug: string
 
   return (
     <div className="animate-fade-in mx-auto max-w-3xl px-4 py-12 sm:px-6">
+      <PageMeta
+        title={`${chapter.title} — Capítulo ${chapter.chapter_number}`}
+        description={excerpt(chapter.body)}
+        type="article"
+      />
       <button
         onClick={back}
         className="mb-6 inline-flex items-center gap-2 text-sm text-grape-200/70 transition hover:text-grape-50"
@@ -84,11 +91,19 @@ export function BibliotecaChapterPage({ cat, slug }: { cat: string; slug: string
         </h1>
       </div>
 
-      <div className="card p-6 sm:p-8">
-        <div className="prose-md whitespace-pre-wrap leading-relaxed text-grape-100/90">
-          {chapter.body}
+      <article className="card p-6 sm:p-8">
+        <div className="prose-md leading-relaxed text-grape-100/90">
+          {(chapter.body ?? '')
+            .split(/\n{2,}/)
+            .map((para, i) => (
+              <p key={i} className="mb-4 whitespace-pre-wrap last:mb-0">
+                {para}
+              </p>
+            ))}
         </div>
-      </div>
+      </article>
+
+      <AdSlot name="bibliotecaChapter" routeKey={chapter.id} />
     </div>
   );
 }
