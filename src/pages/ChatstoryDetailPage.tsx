@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { ArrowLeft, MessagesSquare, Play } from 'lucide-react';
 import { supabase, type Chatstory, type ChatstoryChapter } from '@/lib/supabase';
 import { navigateTo } from '@/lib/router';
+import { PageMeta, excerpt } from '@/lib/seo';
+import { AdSlot } from '@/components/AdSlot';
 
 export function ChatstoryDetailPage({ slug }: { slug: string }) {
   const [story, setStory] = useState<Chatstory | null>(null);
@@ -56,6 +58,12 @@ export function ChatstoryDetailPage({ slug }: { slug: string }) {
 
   return (
     <div className="animate-fade-in mx-auto max-w-4xl px-4 py-10 sm:px-6">
+      <PageMeta
+        title={story.title}
+        description={excerpt(story.synopsis)}
+        image={story.cover_url}
+        type="article"
+      />
       <button
         onClick={() => navigateTo({ name: 'chatstorys' })}
         className="mb-6 inline-flex items-center gap-1.5 text-sm text-grape-200/60 hover:text-grape-50"
@@ -75,9 +83,17 @@ export function ChatstoryDetailPage({ slug }: { slug: string }) {
         </div>
         <div>
           <h1 className="font-display text-3xl font-semibold text-grape-50">{story.title}</h1>
-          <p className="mt-3 whitespace-pre-wrap text-grape-100/70">{story.synopsis}</p>
+          <article className="mt-3 text-grape-100/70">
+            {(story.synopsis ?? '').split(/\n{2,}/).map((para, i) => (
+              <p key={i} className="mb-3 whitespace-pre-wrap last:mb-0">
+                {para}
+              </p>
+            ))}
+          </article>
         </div>
       </div>
+
+      <AdSlot name="chatstoryDetail" routeKey={story.id} />
 
       <h2 className="mb-3 mt-10 font-display text-xl font-semibold text-grape-50">Capítulos</h2>
       {chapters.length === 0 ? (
