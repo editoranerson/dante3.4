@@ -130,6 +130,7 @@ export function BibliotecaPage({ cat }: { cat?: string }) {
           ))}
         </div>
       )}
+      <AdSlot name="bibliotecaList" routeKey={active ?? "all"} />
     </div>
   );
 }
